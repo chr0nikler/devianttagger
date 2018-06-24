@@ -1,0 +1,15 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    csv (3.0.0)
+    httpclient (2.8.3)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  csv
+  httpclient
+
+BUNDLED WITH
+   1.14.6
