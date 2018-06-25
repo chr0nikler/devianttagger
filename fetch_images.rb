@@ -113,7 +113,7 @@ class ImageFetcher
                     end
                     @@images += sources
                     tag = connection_info["tag"]
-                    if @@images.select { |i| i[1] == tag.name }.size < 5
+                    if @@images.select { |i| i[1] == tag.name }.size < 5000
                         tag.offset = res["next_offset"]
                     else
                         tag.done = true
@@ -135,11 +135,8 @@ digital_art = Tag.new("digitalart")
 
 imageFetcher = ImageFetcher.new
 
-puts("doing traditional")
 images = imageFetcher.fetch_tag(traditional) 
-puts("doing photos")
 images += imageFetcher.fetch_tag(photography)
-puts("doing da")
 images += imageFetcher.fetch_tag(digital_art)
 
 # Because I'm a bad coder an introduced some kind of doubling logic in check_connections
