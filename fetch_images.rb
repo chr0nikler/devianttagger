@@ -41,6 +41,28 @@ class ImageFetcher
         @access_token = ""
     end
 
+    # Asynchronously fetches images of a specific tag
+    # Note: not truly async, because check_connections
+    # call is made in a blocking manner here, but theoretically
+    # check_connections could be spawned in a separate thread
+    def fetch_tag(tag)
+        auth_check
+        url = "#{@api_url}/browse/tags"
+        params = { 
+            "tag" => tag.name,
+            "offset" => tag.offset,
+            "access_token" => @access_token
+        }
+        @@connections << { "connection" => @@client.get_async(url,params), "tag" => tag }
+        check_connections
+        if(!tag.done)
+            fetch_tag(tag)
+        end
+        @@images
+    end
+
+    private
+
     # Performs a check using the current access token
     # to see if a new one is needed before making api calls
     def placebo_check
@@ -69,6 +91,13 @@ class ImageFetcher
         end
     end
 
+    def does_image_apply?(image,tag_name)
+        return !image["is_deleted"] && 
+            image["is_downloadable"] &&
+            !image["content"].nil? &&
+            image["category_path"].include?(tag_name)
+    end
+
     # Checks all open connections and process
     # those that have finished
     def check_connections
@@ -78,7 +107,7 @@ class ImageFetcher
                     res = JSON.load(connection_info["connection"].pop.body)
                     sources = []
                     for result in res["results"]
-                        if !result["is_deleted"] && result["is_downloadable"] && !result["content"].nil?
+                        if does_image_apply?(result,connection_info["tag"].name)
                             sources << [result["content"]["src"], connection_info["tag"].name]
                         end
                     end
@@ -98,25 +127,6 @@ class ImageFetcher
         @@images
     end
 
-    # Asynchronously fetches images of a specific tag
-    # Note: not truly async, because check_connections
-    # call is made in a blocking manner here, but theoretically
-    # check_connections could be spawned in a separate thread
-    def fetch_tag(tag)
-        auth_check
-        url = "#{@api_url}/browse/tags"
-        params = { 
-            "tag" => tag.name,
-            "offset" => tag.offset,
-            "access_token" => @access_token
-        }
-        @@connections << { "connection" => @@client.get_async(url,params), "tag" => tag }
-        check_connections
-        if(!tag.done)
-            fetch_tag(tag)
-        end
-        @@images
-    end
 end
 
 traditional = Tag.new("traditional")
@@ -125,9 +135,16 @@ digital_art = Tag.new("digitalart")
 
 imageFetcher = ImageFetcher.new
 
+puts("doing traditional")
 images = imageFetcher.fetch_tag(traditional) 
+puts("doing photos")
 images += imageFetcher.fetch_tag(photography)
+puts("doing da")
 images += imageFetcher.fetch_tag(digital_art)
+
+# Because I'm a bad coder an introduced some kind of doubling logic in check_connections
+# typical of attempting multithreaded garbage
+images = images.uniq
 
 # Writes all images to file of "image,tag"
 CSV.open("data.csv", "wb") do |csv| 
