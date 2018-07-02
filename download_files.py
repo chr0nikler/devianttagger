@@ -1,6 +1,10 @@
 import csv
+import os
 import urllib.request
 
+directory = "./images"
+if not os.path.exists(directory):
+    os.makedirs(directory)
 with open("data.csv") as data:
     reader = csv.DictReader(data)
     data = [link for link in reader]
@@ -29,5 +33,3 @@ with open("data.csv") as data:
         filename += extension
         urllib.request.urlretrieve(dataPair['image'], "./images/" + filename)
         print(filename)
-
-
