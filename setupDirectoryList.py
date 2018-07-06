@@ -1,18 +1,19 @@
 import csv
 from os import listdir
 
-fileName = "imagePathsIds.txt"
+fileName = "images-jpg.txt"
 fileIn = "data.csv"
 
 newFile = open(fileName, 'w')
 
-files = sorted(listdir("./images/"))
+files = sorted(listdir("./images-cropped/"))
+
 for f in files:
-    tag = "photography"
+    tag = 0
     if (f[0] == 't'):
-        tag = "traditional"
+        tag = 1
     elif (f[0] == 'd'):
-        tag = "digitalart"
+        tag = 2
     newFile.write('./images/' + f + ' ' + tag + '\n')
 
 newFile.close()
@@ -20,4 +21,3 @@ newFile.close()
 # with open(fileIn) as data:
   #   reader = csv.DictReader(data)
   #   info = [line for line in data]
-

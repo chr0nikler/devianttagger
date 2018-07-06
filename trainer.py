@@ -10,6 +10,7 @@ from tflearn.layers.estimator import regression
 from tflearn.data_preprocessing import ImagePreprocessing
 from tflearn.data_augmentation import ImageAugmentation
 import numpy as np
+import scipy
 
 # SETUP TRAINING AND TESTING SETS
 # THE TESTING SELECTION IS NOT YET USED
@@ -59,11 +60,17 @@ testiongImagePaths = [imagePaths[i] for i in testingSelection]
 trainingTags = [tags[i] for i in trainingSelection]
 testingTags = [tags[i] for i in testingSelection]
 
+#--- TESTING SEPARATION TO BE USED LATER
+
 # Load path/class_id image file:
 # dataset_file = pathToFile
 
 # Build the preloader array, resize images to 512x512 if necessary
-X, Y = image_preloader(directoryList, image_shape=(512, 512), mode='file', categorical_labels=True, normalize=True)
+print("Initializing preloader")
+
+# Change filter_channel to false to use png images as well
+X, Y = image_preloader(directoryList, image_shape=(512, 512), mode='file', categorical_labels=True, normalize=True, filter_channel=True)
+print("Finished preloading!")
 
 # Shuffle the data
 # X, Y = shuffle(X, Y)
@@ -78,7 +85,7 @@ img_prep.add_featurewise_stdnorm()
 img_aug = ImageAugmentation()
 img_aug.add_random_flip_leftright()
 img_aug.add_random_rotation(max_angle=25.)
-img_aug.add_random_blur(sigma_max=3.)
+# img_aug.add_random_blur(sigma_max=3.)
 
 # Input is a 32×32 image with 3 color channels (red, green and blue)
 network = input_data(shape=[None, 512, 512, 3], data_preprocessing=img_prep, data_augmentation=img_aug)
@@ -104,7 +111,7 @@ network = max_pool_2d(network, 2)
 # Step 7: Dropout – throw away some data randomly during training to prevent over-fitting
 # network = dropout(network, 0.5)
 
-# Step 8: Fully-connected neural network with two outputs (0=isn't a bird, 1=is a bird) to make the final prediction
+# Step 8: Fully-connected neural network with 3 outputs
 network = fully_connected(network, 3, activation='softmax')
 
 # Tell tflearn how we want to train the network
@@ -122,6 +129,9 @@ run_id='image-tagger')
 # model.save("image-tagger.tfl")
 print("\nNetwork trained!\n")
 
+counter = 0
 for img in X:
     prediction = model.predict([img])
+    print(tags[counter])
     print("Result is ", reverseTags(np.argmax(prediction[0])))
+    counter += 1
