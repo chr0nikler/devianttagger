@@ -11,11 +11,19 @@ from tflearn.data_preprocessing import ImagePreprocessing
 from tflearn.data_augmentation import ImageAugmentation
 import numpy as np
 import scipy
+import setupDirectoryList
+
+# SETUP DIRECTORY LIST
+print('o')
+setupDirectoryList.randomizeImages()
+print('o')
 
 # SETUP TRAINING AND TESTING SETS
 # THE TESTING SELECTION IS NOT YET USED
-directoryList = "./test.txt"
-imagePaths = list()
+directoryListTrain = "./images-jpgTrain.txt"
+directoryListTest = "./images-jpgTest.txt"
+imagePathsTrain = list()
+imagePathsTest = list()
 tags = list()
 
 # To be used if integer classification is more convenient
@@ -36,29 +44,15 @@ def reverseTags(value):
         return "photography"
     return "digitalart"
 
-dataSet = open(directoryList, 'r').read().splitlines()
+dataSet = open(directoryListTrain, 'r').read().splitlines()
 for d in dataSet:
-    imagePaths.append(d.split(' ')[0])# enumerateTags(d.split(' ')[1])) )
+    imagePathsTrain.append(d.split(' ')[0])# enumerateTags(d.split(' ')[1])) )
     tags.append(int((d.split(' ')[1])))
 
+dataS = open(directoryListTest, 'r').read().splitlines()
+for d in dataS:
+    imagePathsTest.append(d.split(' ')[0])
 # imageSet = [filename for filename in os.listdir(path) if filename[0] == 'p']
-
-trainingSizeRatio = 0.7
-testingSizeRatio = 1.0 - trainingSizeRatio
-
-trainingSize = round(trainingSizeRatio * len(imagePaths))
-testingSize = len(imagePaths) - trainingSize
-
-# trainingSet = random.sample(imageSet, trainingSize)
-indexRange = range(len(imagePaths))
-trainingSelection = random.sample(indexRange, trainingSize)
-testingSelection = [i for i in indexRange if i not in trainingSelection]
-# testingSet = [f for f in imageSet if f not in trainingSet]
-
-trainingImagePaths = [imagePaths[i] for i in trainingSelection]
-testiongImagePaths = [imagePaths[i] for i in testingSelection]
-trainingTags = [tags[i] for i in trainingSelection]
-testingTags = [tags[i] for i in testingSelection]
 
 #--- TESTING SEPARATION TO BE USED LATER
 
@@ -69,8 +63,10 @@ testingTags = [tags[i] for i in testingSelection]
 print("Initializing preloader")
 
 # Change filter_channel to false to use png images as well
-X, Y = image_preloader(directoryList, image_shape=(512, 512), mode='file', categorical_labels=True, normalize=True, filter_channel=True)
-print("Finished preloading!")
+X, Y = image_preloader(directoryListTrain, image_shape=(32, 32), mode='file', categorical_labels=True, normalize=True, filter_channel=True)
+A, B = image_preloader(directoryListTest, image_shape=(32, 32), mode='file', categorical_labels=True, normalize=True, filter_channel=True)
+print("Finished preloading 1!")
+
 
 # Shuffle the data
 # X, Y = shuffle(X, Y)
@@ -88,7 +84,7 @@ img_aug.add_random_rotation(max_angle=25.)
 # img_aug.add_random_blur(sigma_max=3.)
 
 # Input is a 32×32 image with 3 color channels (red, green and blue)
-network = input_data(shape=[None, 512, 512, 3], data_preprocessing=img_prep, data_augmentation=img_aug)
+network = input_data(shape=[None, 32, 32, 3], data_preprocessing=img_prep, data_augmentation=img_aug)
 
 # Step 1: Convolution
 network = conv_2d(network, 32, 3, activation='relu')
@@ -130,8 +126,8 @@ run_id='image-tagger')
 print("\nNetwork trained!\n")
 
 counter = 0
-for img in X:
+for img in A:
     prediction = model.predict([img])
-    print(tags[counter])
+    print(imagePathsTest[counter])
     print("Result is ", reverseTags(np.argmax(prediction[0])))
     counter += 1

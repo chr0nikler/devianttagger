@@ -1,23 +1,50 @@
-import csv
 from os import listdir
+from random import shuffle
 
-fileName = "images-jpg.txt"
-fileIn = "data.csv"
+def randomizeImages():
 
-newFile = open(fileName, 'w')
+    fileName = "images-jpgTrain.txt"
+    directoryPath = './images/'
 
-files = sorted(listdir("./images-cropped/"))
+    newFile = open(fileName, 'w')
 
-for f in files:
-    tag = 0
-    if (f[0] == 't'):
-        tag = 1
-    elif (f[0] == 'd'):
-        tag = 2
-    newFile.write('./images/' + f + ' ' + tag + '\n')
+    files = sorted(listdir(directoryPath))
+    files = [f for f in files if f[-4:] == '.jpg']
 
-newFile.close()
+    files = [f for f in files if 'digitalart' not in f]
+    shuffle(files)
 
-# with open(fileIn) as data:
-  #   reader = csv.DictReader(data)
-  #   info = [line for line in data]
+    trainingSizeRatio = 0.7
+    testingSizeRatio = 1.0 - trainingSizeRatio
+
+    trainingSize = round(trainingSizeRatio * len(files))
+    testingSize = len(files) - trainingSize
+
+    trainingSelection = files[0:trainingSize]
+    testingSelection = files[trainingSize:len(files)]
+
+
+    for f in trainingSelection:
+        tag = 0
+        if (f[0] == 't'):
+            tag = 1
+        elif (f[0] == 'd'):
+            tag = 2
+        newFile.write(directoryPath + f + ' ' + str(tag) + '\n')
+
+    newFile.close()
+
+    newFile = open("images-jpgTest.txt", 'w')
+
+    for f in testingSelection:
+        tag = 0
+        if (f[0] == 't'):
+            tag = 1
+        elif (f[0] == 'd'):
+            tag = 2
+        newFile.write(directoryPath + f + ' ' + str(tag) + '\n')
+
+    newFile.close()
+
+if __name__ == '__main__':
+    randomizeImages()
