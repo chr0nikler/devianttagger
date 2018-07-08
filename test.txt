@@ -1,0 +1,3 @@
+images-cropped/traditional91.jpg 0
+images-cropped/digitalart200.jpg 1
+images-cropped/photography787.jpg 2

@@ -1,0 +1,2 @@
+model_checkpoint_path: "/home/smallrig/Documents/Dev/Projects/devianttagger/image-tagger.tfl"
+all_model_checkpoint_paths: "/home/smallrig/Documents/Dev/Projects/devianttagger/image-tagger.tfl"

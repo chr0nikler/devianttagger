@@ -1,13 +1,7 @@
 import os
 import glob
 from PIL import Image, ImageOps
-
-def fetch_img_list(img_directory, img_types=("*.jpg", "*.png")):
-    # Fetch list of images of specified type
-    img_list = []
-    for img_type in img_types:
-        img_list.extend(glob.glob(img_directory + img_type))
-    return img_list
+from utils import fetch_img_list
 
 def crop_images(file_list, dest_directory, crop_dims=(512, 512)):
     # Crops image to desired size
