@@ -11,15 +11,16 @@ from tflearn.data_preprocessing import ImagePreprocessing
 from tflearn.data_augmentation import ImageAugmentation
 import numpy as np
 import scipy
+from pathlib import Path
 
 # SETUP TRAINING AND TESTING SETS
-# THE TESTING SELECTION IS NOT YET USED
-directoryList = "./test.txt"
+# THE TESTING SELECTION IS NOT YET USED #directoryList = "./test.txt"
+directoryList = "./dataset_path_id.txt"
 imagePaths = list()
 tags = list()
 
 # To be used if integer classification is more convenient
-# 0 -> 'photography', 1 -> 'traditional', 2 -> 'digitalart'
+# 2 -> 'photography', 0 -> 'traditional', 1 -> 'digitalart'
 
 
 def enumerateTags(tag):
@@ -38,8 +39,9 @@ def reverseTags(value):
 
 dataSet = open(directoryList, 'r').read().splitlines()
 for d in dataSet:
-    imagePaths.append(d.split(' ')[0])# enumerateTags(d.split(' ')[1])) )
-    tags.append(int((d.split(' ')[1])))
+    if "digital" not in d:
+        imagePaths.append(d.split(' ')[0])# enumerateTags(d.split(' ')[1])) )
+        tags.append(int((d.split(' ')[1])))
 
 # imageSet = [filename for filename in os.listdir(path) if filename[0] == 'p']
 
@@ -65,11 +67,11 @@ testingTags = [tags[i] for i in testingSelection]
 # Load path/class_id image file:
 # dataset_file = pathToFile
 
-# Build the preloader array, resize images to 512x512 if necessary
+# Build the preloader array, resize images to 128x128 if necessary
 print("Initializing preloader")
 
 # Change filter_channel to false to use png images as well
-X, Y = image_preloader(directoryList, image_shape=(512, 512), mode='file', categorical_labels=True, normalize=True, filter_channel=True)
+X, Y = image_preloader(directoryList, image_shape=(128, 128), mode='file', categorical_labels=True, normalize=True, filter_channel=True) 
 print("Finished preloading!")
 
 # Shuffle the data
@@ -88,7 +90,7 @@ img_aug.add_random_rotation(max_angle=25.)
 # img_aug.add_random_blur(sigma_max=3.)
 
 # Input is a 32×32 image with 3 color channels (red, green and blue)
-network = input_data(shape=[None, 512, 512, 3], data_preprocessing=img_prep, data_augmentation=img_aug)
+network = input_data(shape=[None, 128, 128, 3], data_preprocessing=img_prep, data_augmentation=img_aug)
 
 # Step 1: Convolution
 network = conv_2d(network, 32, 3, activation='relu')
@@ -105,8 +107,8 @@ network = max_pool_2d(network, 2)
 # Step 5: Max pooling again
 # network = max_pool_2d(network, 2)
 
-# Step 6: Fully-connected 512 node neural network
-# network = fully_connected(network, 512, activation='relu')
+# Step 6: Fully-connected 128 node neural network
+# network = fully_connected(network, 128, activation='relu')
 
 # Step 7: Dropout – throw away some data randomly during training to prevent over-fitting
 # network = dropout(network, 0.5)
@@ -120,18 +122,24 @@ network = regression(network, optimizer='adam', loss='categorical_crossentropy',
 # Wrap the network in a model object
 model = tflearn.DNN(network, tensorboard_verbose=0)
 
-# Build neural network and train
-model.fit(X, Y, n_epoch=10, shuffle=True, validation_set=(X, Y),
-show_metric=True, batch_size=96,
-snapshot_epoch=True,
-run_id='image-tagger')
+model_path = Path("./image-tagger.tfl.meta")
+if model_path.is_file():
+    model.load("./image-tagger.tfl")
+else:
+    # Build neural network and train
+    model.fit(X, Y, n_epoch=10, shuffle=True, validation_set=(X, Y),
+    show_metric=True, batch_size=96,
+    snapshot_epoch=True,
+    run_id='image-tagger')
 
-# model.save("image-tagger.tfl")
-print("\nNetwork trained!\n")
+    model.save("image-tagger.tfl")
+    print("\nNetwork trained!\n")
+
 
 counter = 0
 for img in X:
     prediction = model.predict([img])
+    print(imagePaths[counter])
     print(tags[counter])
     print("Result is ", reverseTags(np.argmax(prediction[0])))
     counter += 1
