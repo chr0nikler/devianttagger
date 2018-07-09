@@ -12,11 +12,10 @@ from tflearn.data_augmentation import ImageAugmentation
 import numpy as np
 import scipy
 import setupDirectoryList
+from pathlib import Path
 
 # SETUP DIRECTORY LIST
-print('o')
 setupDirectoryList.randomizeImages()
-print('o')
 
 # SETUP TRAINING AND TESTING SETS
 # THE TESTING SELECTION IS NOT YET USED
@@ -27,7 +26,7 @@ imagePathsTest = list()
 tags = list()
 
 # To be used if integer classification is more convenient
-# 0 -> 'photography', 1 -> 'traditional', 2 -> 'digitalart'
+# 2 -> 'photography', 0 -> 'traditional', 1 -> 'digitalart'
 
 
 def enumerateTags(tag):
@@ -59,14 +58,13 @@ for d in dataS:
 # Load path/class_id image file:
 # dataset_file = pathToFile
 
-# Build the preloader array, resize images to 512x512 if necessary
+# Build the preloader array, resize images to 128x128 if necessary
 print("Initializing preloader")
 
 # Change filter_channel to false to use png images as well
 X, Y = image_preloader(directoryListTrain, image_shape=(32, 32), mode='file', categorical_labels=True, normalize=True, filter_channel=True)
 A, B = image_preloader(directoryListTest, image_shape=(32, 32), mode='file', categorical_labels=True, normalize=True, filter_channel=True)
 print("Finished preloading 1!")
-
 
 # Shuffle the data
 # X, Y = shuffle(X, Y)
@@ -101,8 +99,8 @@ network = max_pool_2d(network, 2)
 # Step 5: Max pooling again
 # network = max_pool_2d(network, 2)
 
-# Step 6: Fully-connected 512 node neural network
-# network = fully_connected(network, 512, activation='relu')
+# Step 6: Fully-connected 128 node neural network
+# network = fully_connected(network, 128, activation='relu')
 
 # Step 7: Dropout – throw away some data randomly during training to prevent over-fitting
 # network = dropout(network, 0.5)
@@ -116,14 +114,19 @@ network = regression(network, optimizer='adam', loss='categorical_crossentropy',
 # Wrap the network in a model object
 model = tflearn.DNN(network, tensorboard_verbose=0)
 
-# Build neural network and train
-model.fit(X, Y, n_epoch=10, shuffle=True, validation_set=(X, Y),
-show_metric=True, batch_size=96,
-snapshot_epoch=True,
-run_id='image-tagger')
+model_path = Path("./image-tagger.tfl.meta")
+if model_path.is_file():
+    model.load("./image-tagger.tfl")
+else:
+    # Build neural network and train
+    model.fit(X, Y, n_epoch=10, shuffle=True, validation_set=(X, Y),
+    show_metric=True, batch_size=96,
+    snapshot_epoch=True,
+    run_id='image-tagger')
 
-# model.save("image-tagger.tfl")
-print("\nNetwork trained!\n")
+    model.save("image-tagger.tfl")
+    print("\nNetwork trained!\n")
+
 
 counter = 0
 numerator = 0.0
