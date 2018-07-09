@@ -38,9 +38,9 @@ def enumerateTags(tag):
     return 1
 
 def reverseTags(value):
-    if (value == 0):
+    if (value == 1):
         return "traditional"
-    elif (value == 2):
+    elif (value == 0):
         return "photography"
     return "digitalart"
 
@@ -108,7 +108,7 @@ network = max_pool_2d(network, 2)
 # network = dropout(network, 0.5)
 
 # Step 8: Fully-connected neural network with 3 outputs
-network = fully_connected(network, 3, activation='softmax')
+network = fully_connected(network, 2, activation='softmax')
 
 # Tell tflearn how we want to train the network
 network = regression(network, optimizer='adam', loss='categorical_crossentropy', learning_rate=0.001)
@@ -126,8 +126,14 @@ run_id='image-tagger')
 print("\nNetwork trained!\n")
 
 counter = 0
+numerator = 0.0
+denominator = float(len(imagePathsTest))
 for img in A:
     prediction = model.predict([img])
     print(imagePathsTest[counter])
     print("Result is ", reverseTags(np.argmax(prediction[0])))
     counter += 1
+    if (reverseTags(np.argmax(prediction[0])) in imagePathsTest[counter]):
+        numerator += 1.0
+
+print("Accuracy: " + str(numerator / denominator))
