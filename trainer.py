@@ -116,6 +116,7 @@ model = tflearn.DNN(network, tensorboard_verbose=0)
 
 model_path = Path("./image-tagger.tfl.meta")
 if model_path.is_file():
+    print('here')
     model.load("./image-tagger.tfl")
 else:
     # Build neural network and train
@@ -135,8 +136,9 @@ for img in A:
     prediction = model.predict([img])
     print(imagePathsTest[counter])
     print("Result is ", reverseTags(np.argmax(prediction[0])))
-    counter += 1
     if (reverseTags(np.argmax(prediction[0])) in imagePathsTest[counter]):
         numerator += 1.0
+    counter += 1
+
 
 print("Accuracy: " + str(numerator / denominator))
