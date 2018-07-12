@@ -20,7 +20,7 @@ end
 # client, connections, images and tags are all class levels
 # vars to avoid instantiating multiple ImageFetchers and
 # opening too many connections. This is meant to be dirt
-# simple, just to get the job done 
+# simple, just to get the job done
 #
 class ImageFetcher
     @@client = HTTPClient.new(
@@ -28,12 +28,13 @@ class ImageFetcher
             "User-Agent" => "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:60.0) Gecko/20100101 Firefox/60.0",
             "Accept-Encoding": "compress"
         }
-    ) 
+    )
     # Uncomment for debugging requests
     #@@client.debug_dev = $stdout
     @@connections = []
     @@images = []
     @@tags = []
+    @@count = 0
 
     def initialize
         @auth_url = "https://www.deviantart.com/oauth2"
@@ -46,19 +47,24 @@ class ImageFetcher
     # call is made in a blocking manner here, but theoretically
     # check_connections could be spawned in a separate thread
     def fetch_tag(tag)
-        auth_check
-        url = "#{@api_url}/browse/tags"
-        params = { 
-            "tag" => tag.name,
-            "offset" => tag.offset,
-            "access_token" => @access_token
-        }
-        @@connections << { "connection" => @@client.get_async(url,params), "tag" => tag }
-        check_connections
-        if(!tag.done)
-            fetch_tag(tag)
+        begin
+            auth_check
+            url = "#{@api_url}/browse/tags"
+            params = {
+                "tag" => tag.name,
+                "offset" => tag.offset,
+                "access_token" => @access_token
+            }
+            @@connections << { "connection" => @@client.get_async(url,params), "tag" => tag }
+            check_connections
+            if(!tag.done)
+                fetch_tag(tag)
+            end
+            @@images
+        rescue Exception
+            @@count += 1
+            puts @@count
         end
-        @@images
     end
 
     private
@@ -67,7 +73,7 @@ class ImageFetcher
     # to see if a new one is needed before making api calls
     def placebo_check
         placebo = "#{@api_url}/placebo"
-        params = { 
+        params = {
             "access_token" => @access_token
         }
         res = @@client.get(placebo,params)
@@ -80,7 +86,7 @@ class ImageFetcher
     def auth_check
         if !placebo_check
             url = "#{@auth_url}/token"
-            params = { 
+            params = {
                 "grant_type" => "client_credentials",
                 "client_id" => ENV["DEVIANTART_ID"],
                 "client_secret" => ENV["DEVIANTART_SECRET"]
@@ -92,7 +98,7 @@ class ImageFetcher
     end
 
     def does_image_apply?(image,tag_name)
-        return !image["is_deleted"] && 
+        return !image["is_deleted"] &&
             image["is_downloadable"] &&
             !image["content"].nil? &&
             image["category_path"].include?(tag_name)
@@ -131,22 +137,29 @@ end
 
 traditional = Tag.new("traditional")
 photography = Tag.new("photography")
-digital_art = Tag.new("digitalart")
+#digital_art = Tag.new("digitalart")
 
 imageFetcher = ImageFetcher.new
 
-images = imageFetcher.fetch_tag(traditional) 
-images += imageFetcher.fetch_tag(photography)
-images += imageFetcher.fetch_tag(digital_art)
+images = (imageFetcher.fetch_tag(traditional)).uniq
+CSV.open("data.csv", "wb") do |csv|
+    csv << ["image","tag"]
+    images.each do |elem|
+        csv << elem
+    end
+end
+
+images = imageFetcher.fetch_tag(photography)
+#images += imageFetcher.fetch_tag(digital_art)
 
 # Because I'm a bad coder an introduced some kind of doubling logic in check_connections
 # typical of attempting multithreaded garbage
 images = images.uniq
 
 # Writes all images to file of "image,tag"
-CSV.open("data.csv", "wb") do |csv| 
+CSV.open("data.csv", "wb") do |csv|
     csv << ["image","tag"]
-    images.each do |elem| 
+    images.each do |elem|
         csv << elem
     end
 end
