@@ -91,25 +91,25 @@ network = conv_2d(network, 32, 3, activation='relu')
 network = max_pool_2d(network, 2)
 
 # Step 3: Convolution again
-# network = conv_2d(network, 64, 3, activation='relu')
+network = conv_2d(network, 64, 3, activation='relu')
 
 # Step 4: Convolution yet again
-# network = conv_2d(network, 64, 3, activation='relu')
+network = conv_2d(network, 64, 3, activation='relu')
 
 # Step 5: Max pooling again
-# network = max_pool_2d(network, 2)
+network = max_pool_2d(network, 2)
 
 # Step 6: Fully-connected 128 node neural network
-# network = fully_connected(network, 128, activation='relu')
+network = fully_connected(network, 128, activation='sigmoid')
 
 # Step 7: Dropout – throw away some data randomly during training to prevent over-fitting
-# network = dropout(network, 0.5)
+network = dropout(network, 0.9)
 
 # Step 8: Fully-connected neural network with 3 outputs
 network = fully_connected(network, 2, activation='softmax')
 
 # Tell tflearn how we want to train the network
-network = regression(network, optimizer='adam', loss='categorical_crossentropy', learning_rate=0.001)
+network = regression(network, optimizer='sgd', loss='binary_crossentropy', learning_rate=0.0005)
 
 # Wrap the network in a model object
 model = tflearn.DNN(network, tensorboard_verbose=0)
