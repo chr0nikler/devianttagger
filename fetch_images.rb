@@ -102,6 +102,7 @@ class ImageFetcher
     # Checks all open connections and process
     # those that have finished
     def check_connections
+        counter = 0
         while !@@connections.empty?
             @@connections.delete_if do |connection_info|
                 if(connection_info["connection"].finished?)
@@ -112,9 +113,13 @@ class ImageFetcher
                             sources << [result["content"]["src"], connection_info["tag"].name]
                         end
                     end
+                    if(counter % 100)
+                        puts("Images #{@@images.size}")
+                    end
+                    counter = counter + 1
                     @@images += sources
                     tag = connection_info["tag"]
-                    if @@images.select { |i| i[1] == tag.name }.size < 5000
+                    if @@images.select { |i| i[1] == tag.name }.size < 4500
                         tag.offset = res["next_offset"]
                     else
                         tag.done = true
@@ -132,13 +137,11 @@ end
 
 traditional = Tag.new("traditional")
 photography = Tag.new("photography")
-digital_art = Tag.new("digitalart")
 
 imageFetcher = ImageFetcher.new
 
 images = imageFetcher.fetch_tag(traditional) 
 images += imageFetcher.fetch_tag(photography)
-images += imageFetcher.fetch_tag(digital_art)
 
 # Because I'm a bad coder an introduced some kind of doubling logic in check_connections
 # typical of attempting multithreaded garbage
