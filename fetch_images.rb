@@ -95,6 +95,7 @@ class ImageFetcher
         return !image["is_deleted"] && 
             image["is_downloadable"] &&
             !image["content"].nil? &&
+            !image["content"]["src"].match(/jpg$/).nil? &&
             image["category_path"].include?(tag_name)
     end
 
