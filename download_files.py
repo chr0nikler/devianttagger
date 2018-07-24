@@ -24,6 +24,7 @@ with open("data.csv") as data:
         if (tagName == "traditional"):
             filename += str(countTraditional)
             countTraditional += 1
+            continue # temp
         elif (tagName == "digitalart"):
             filename += str(countDigital)
             countDigital += 1
@@ -31,5 +32,8 @@ with open("data.csv") as data:
             filename += str(countPhoto)
             countPhoto += 1
         filename += extension
-        urllib.request.urlretrieve(dataPair['image'], "./images/" + filename)
-        print(filename)
+        try:
+            urllib.request.urlretrieve(dataPair['image'], "./images/" + filename)
+            print(filename)
+        except:
+            print("Encountered error for filename {0}".format(filename))
